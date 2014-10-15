@@ -36,7 +36,7 @@ CmdParser::readCmd()
 void
 CmdParser::readCmdInt(istream& istr)
 {
-   resetBufAndPrintPrompt();
+   resetBufAndPrintPrompt(); //print  "cmd> "
 
    while (1) {
       char ch = mygetc(istr);
@@ -47,18 +47,30 @@ CmdParser::readCmdInt(istream& istr)
          case HOME_KEY       : moveBufPtr(_readBuf); break;
          case LINE_END_KEY   :
          case END_KEY        : moveBufPtr(_readBufEnd); break;
-         case BACK_SPACE_KEY : /* TODO */ break;
+         case BACK_SPACE_KEY : 
+			 /* TODO */ 
+			 if (_readBufPtr == _readBuf)
+				mybeep();
+			 else {
+				--_readBufPtr;
+				--_readBufEnd;
+			 }
+			 break;
          case DELETE_KEY     : deleteChar(); break;
          case NEWLINE_KEY    : addHistory();
                                cout << char(NEWLINE_KEY);
                                resetBufAndPrintPrompt(); break;
          case ARROW_UP_KEY   : moveToHistory(_historyIdx - 1); break;
          case ARROW_DOWN_KEY : moveToHistory(_historyIdx + 1); break;
-         case ARROW_RIGHT_KEY: /* TODO */ break;
-         case ARROW_LEFT_KEY : /* TODO */ break;
+         case ARROW_RIGHT_KEY: /* TODO */ moveBufPtr(_readBufPtr + 1); break;
+         case ARROW_LEFT_KEY : /* TODO */ moveBufPtr(_readBufPtr - 1); break;
          case PG_UP_KEY      : moveToHistory(_historyIdx - PG_OFFSET); break;
          case PG_DOWN_KEY    : moveToHistory(_historyIdx + PG_OFFSET); break;
-         case TAB_KEY        : /* TODO */ break;
+         case TAB_KEY        : 
+			 /* TODO */ 
+			 _readBufPtr += 2;
+			 _readBufEnd += 2;
+			 break;
          case INSERT_KEY     : // not yet supported; fall through to UNDEFINE
          case UNDEFINED_KEY:   mybeep(); break;
          default:  // printable character
@@ -86,8 +98,15 @@ CmdParser::readCmdInt(istream& istr)
 bool
 CmdParser::moveBufPtr(char* const ptr)
 {
-   // TODO...
-   return true;
+	// TODO...
+	if (ptr < _readBuf || ptr > _readBufEnd)
+	{
+		mybeep();
+		return false;
+	}
+	else
+		_readBufPtr = ptr;
+	return true;
 }
 
 
@@ -114,7 +133,17 @@ bool
 CmdParser::deleteChar()
 {
    // TODO...
-   return true;
+	if (_readBufPtr == _readBufEnd)
+	{
+		mybeep();
+		return false;
+	}
+	strncpy(_readBufPtr, _readBufPtr + 1, _readBufEnd - _readBufPtr - 1);
+	--_readBufEnd;
+	*_readBufEnd = 0;
+	cout << _readBufPtr;
+	//cout << "\b"<<" ";
+	return true;
 }
 
 // 1. Insert character 'ch' for "repeat" times at _readBufPtr
@@ -136,7 +165,14 @@ void
 CmdParser::insertChar(char ch, int repeat)
 {
    // TODO...
-   assert(repeat >= 1);
+	*_readBufPtr++ = ch;
+	_readBufEnd++;
+	
+	assert(repeat >= 1);
+	strncpy(_readBufPtr + repeat, _readBufPtr, _readBufEnd-_readBufPtr);
+	memset(_readBufPtr, ch, repeat);
+	_readBufPtr += repeat;
+	_readBufEnd += repeat;   
 }
 
 // 1. Delete the line that is currently shown on the screen
@@ -157,6 +193,14 @@ void
 CmdParser::deleteLine()
 {
    // TODO...
+	memset(_readBuf,0,_readBufEnd-_readBuf);
+	while (_readBufPtr > _readBuf)
+	{
+		cout << "\b"<<" ";
+		_readBufPtr--;
+	}
+	_readBufPtr = _readBufEnd = _readBuf;
+    *_readBufPtr = 0;
 }
 
 
@@ -182,6 +226,21 @@ void
 CmdParser::moveToHistory(int index)
 {
    // TODO...
+	if (index < _historyIdx )
+	{
+		if (_historyIdx == 0)
+		{
+			mybeep();
+			return;
+		}
+		if ()
+		_history.push_back(_readBuf);
+	}
+	else
+	{
+	
+	
+	}
 }
 
 
@@ -200,7 +259,24 @@ CmdParser::moveToHistory(int index)
 void
 CmdParser::addHistory()
 {
-   // TODO...
+	// TODO...
+	//remove ' '
+	char *temp = _readBuf;
+	for (int i = 0, int j = 0; i < strlen(_readBuf); i++, j++)
+	{
+		if (_readBuf[i] != ' ')
+			_readBuf[j] = _readBuf[i];
+		else
+			j--;	
+	}
+	_readBuf[j] = 0;
+	if(strlen(_readBuf)) 
+	{
+		_history.push_back(_readBuf);
+		
+		_historyIdx =  _history.size();
+	}
+
 }
 
 
