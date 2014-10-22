@@ -55,11 +55,6 @@ CmdParser::readCmdInt(istream& istr)
 			 else {
 				/*update cursor*/
 				//delete  the  character  before  the current cursor
-				//cout << "\b"<<" ";
-				
-				//cout<<endl;
-				//cout << "(debug"<<*_readBufPtr<<")"<<endl;
-				//cout << _readBuf<<endl;
 				char *tmp = _readBufPtr;
 				strncpy(_readBufPtr-1, _readBufPtr, _readBufEnd - _readBufPtr);
 				*--_readBufEnd = 0;
@@ -138,9 +133,6 @@ CmdParser::moveBufPtr(char* const ptr)
 				cout << "\b";				
 			}
 		}
-		//cout<<endl;
-		//cout<<"ptr is " << *_readBufPtr;
-		//cout<<endl;
 	}
 	return true;
 }
@@ -182,11 +174,6 @@ CmdParser::deleteChar()
 	cout<<"\b";
 	_readBufPtr = _readBufEnd; 
 	moveBufPtr(tmp);
-
-	//--_readBufEnd;
-	//*_readBufEnd = 0;
-	//cout << _readBufPtr;
-	//cout << "\b"<<" ";
 	return true;
 }
 
@@ -239,24 +226,15 @@ void
 CmdParser::deleteLine()
 {
    // TODO...
-	moveBufPtr(_readBufEnd);
-
-	char *tmp = _readBufPtr;
-	memset(_readBuf," ",_readBufEnd-_readBuf);
+	memset(_readBuf,' ',_readBufEnd-_readBuf);
 	//move to head
-	while (_readBufPtr > _readBuf)
-	{
-		cout << "\b";
-		_readBufPtr--;
-	}
-	moveBufPtr(_readBufEnd);
-	cout << _readBuf;
-
-	
-
-	_readBufPtr = _readBufEnd = _readBuf;
-    	//*_readBufPtr = 0;
 	moveBufPtr(_readBuf);
+	//clear all
+	cout<< _readBuf;
+	_readBufPtr = _readBufEnd;
+	moveBufPtr(_readBuf);
+	_readBufPtr = _readBufEnd = _readBuf;
+	*_readBufPtr = 0;
 }
 
 
@@ -282,23 +260,39 @@ void
 CmdParser::moveToHistory(int index)
 {
    // TODO...
-/*
-	if (index < _historyIdx )
+	if (index < _historyIdx ) //move up
 	{
 		if (_historyIdx == 0)
 		{
 			mybeep();
 			return;
 		}
-		if ()
-		_history.push_back(_readBuf);
+		if (_historyIdx == _history.size())//&& !_tempCmdStored)
+		{
+			_history.push_back(_readBuf);
+			//_history[_historyIdx] = _readBuf;
+			_tempCmdStored = true;
+		}
+		if (index < 0)
+			index = 0;
+		
 	}
 	else
 	{
-	
-	
+		if (_historyIdx == _history.size())
+		{
+			mybeep();
+			return;
+		}
+		if (index >= _history.size())
+			index = _history.size() - 1;
 	}
-*/
+	_historyIdx = index;
+	retrieveHistory();
+	if ((index == _history.size() - 1) && _tempCmdStored) {
+		_history.pop_back();
+		_tempCmdStored = false;
+	}
 }
 
 
@@ -319,9 +313,8 @@ CmdParser::addHistory()
 {
 	// TODO...
 	//remove ' '
-/*
-	char *temp = _readBuf;
-	for (int i = 0, int j = 0; i < strlen(_readBuf); i++, j++)
+	size_t i = 0, j = 0;
+	for (; i < _readBufEnd - _readBuf; i++, j++)
 	{
 		if (_readBuf[i] != ' ')
 			_readBuf[j] = _readBuf[i];
@@ -329,14 +322,19 @@ CmdParser::addHistory()
 			j--;	
 	}
 	_readBuf[j] = 0;
-	if(strlen(_readBuf)) 
+	if(strlen(_readBuf)) //not null  
 	{
-		_history.push_back(_readBuf);
-		
-		_historyIdx =  _history.size();
+		if (_tempCmdStored) //need to replace tmp
+		{
+			_history.pop_back();
+			_history.push_back(_readBuf);
+			_tempCmdStored = false;
+		}
+		else {
+			_history.push_back(_readBuf);			
+		}
 	}
-*/
-
+	_historyIdx =  _history.size();
 }
 
 
